@@ -1,0 +1,3 @@
+[submodule "modules/bin3C"]
+	path = modules/bin3C
+	url = https://github.com/cerebis/bin3C
