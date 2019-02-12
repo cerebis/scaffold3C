@@ -10,7 +10,7 @@ Currently scaffold3C takes as input the results of the genome-clustering tool [b
 
 ### Dependencies
 
-#### proxigenomics_toolkit
+- proxigenomics_toolkit
 
  
 
