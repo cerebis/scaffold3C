@@ -5,7 +5,7 @@ from proxigenomics_toolkit.exceptions import ApplicationException
 import logging
 import sys
 
-__version__ = '0.1'
+__version__ = '0.1a1'
 
 if __name__ == '__main__':
     import argparse
