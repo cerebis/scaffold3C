@@ -23,39 +23,26 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose', default=False, action='store_true', help='Verbose output')
     parser.add_argument('--clobber', default=False, action='store_true', help='Clobber existing files')
     parser.add_argument('--log', help='Log file path [OUTDIR/scaffold3C.log]')
-    parser.add_argument('-f', '--format', choices=['csv', 'h5'], default='csv',
-                        help='Input contact map format')
-    parser.add_argument('--eta', default=False, action='store_true', help='Precount bam alignments to provide an ETA')
-    parser.add_argument('--med-alpha', type=int, default=10, help='Coverage median filter factor.')
-    parser.add_argument('--tip-size', type=int, default=None,
-                        help='Accept only pairs which map within reference tips (size in bp).')
-    parser.add_argument('--strong', type=int, default=None,
-                        help='Using strong matching constraint (minimum matches in alignments).')
-    parser.add_argument('--bin-size', type=int, required=False, help='Size of bins in bp')
-    parser.add_argument('--min-insert', type=int, required=False, help='Minimum pair separation')
-    parser.add_argument('--min-mapq', type=int, default=0, help='Minimum acceptable mapping quality [0]')
-    parser.add_argument('--min-reflen', type=int, default=1, help='Minimum acceptable reference length [0]')
-    parser.add_argument('--min-signal', type=int, default=1, help='Minimum acceptable trans signal [1]')
     parser.add_argument('--max-image', type=int, default=4000, help='Maximum image size for plots [4000]')
+
+    parser.add_argument('--min-reflen', type=int, default=1000, help='Minimum acceptable reference length [1000]')
+    parser.add_argument('--min-signal', type=int, default=5, help='Minimum acceptable trans signal [5]')
     parser.add_argument('--min-size', type=int, default=5, help='Minimum cluster size for ordering [5]')
     parser.add_argument('--min-extent', type=int, default=50000,
                         help='Minimum cluster extent (kb) for ordering [50000]')
     parser.add_argument('--min-ordlen', default=2000,
                         help='Minimum length of sequence to use in ordering [2000]')
+
     parser.add_argument('--dist-method', choices=['inverse', 'neglog'], default='inverse',
                         help='Distance method for ordering [inverse]')
     parser.add_argument('--only-large', default=False, action='store_true',
                         help='Only write FASTA for clusters longer than min_extent')
-    parser.add_argument('--skip-ordering', default=False, action='store_true',
-                        help='Skip ordering clusters')
     parser.add_argument('--skip-plotting', default=False, action='store_true',
                         help='Skip plotting the contact map')
-    parser.add_argument('--load-map', help='Load a previously calculated map')
-    parser.add_argument('-e', '--enzymes', required=True, action='append',
-                        help='Case-sensitive enzyme name (NEB), use multiple times for multiple enzymes')
-    parser.add_argument('fasta', help='Reference fasta sequence')
-    parser.add_argument('bam', help='Input bam file in query order')
-    parser.add_argument('out_dir', help='Output directory')
+    parser.add_argument('--fasta', help='Alternative location of source FASTA from that supplied during clustering')
+    parser.add_argument('MAP', help='Contact map')
+    parser.add_argument('CLUSTERING', help='Clustering solution')
+    parser.add_argument('OUTDIR', help='Output directory')
 
     args = parser.parse_args()
 
@@ -64,7 +51,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     try:
-        make_dir(args.out_dir, args.clobber)
+        make_dir(args.OUTDIR, args.clobber)
     except IOError as e:
         print 'Error: {}'.format(e.message)
         sys.exit(1)
@@ -92,7 +79,7 @@ if __name__ == '__main__':
     if args.log is not None:
         log_path = args.log
     else:
-        log_path = os.path.join(args.out_dir, 'scaffold3C.log')
+        log_path = os.path.join(args.OUTDIR, 'scaffold3C.log')
     fh = logging.FileHandler(log_path, mode='a')
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
@@ -105,81 +92,50 @@ if __name__ == '__main__':
 
     try:
 
+        make_dir(args.OUTDIR, exist_ok=True)
+
         if not args.seed:
             args.seed = make_random_seed()
             logger.info('Generated random seed: {}'.format(args.seed))
         else:
             logger.info("User set random seed: {}".format(args.seed))
 
-        make_dir(args.out_dir, exist_ok=True)
+        # Load a pre-existing serialized contact map and clustering solution
+        logger.info('Loading existing contact map from: {}'.format(args.MAP))
+        cm = load_object(args.MAP)
 
-        if args.load_map:
-            # Load a pre-existing serialized contact map
-            logger.info('Loading existing contact map from: {}'.format(args.load_map))
-            cm = load_object(args.load_map)
-            cm.min_extent = args.min_extent
-            # update the mask if the user has changed the thresholds
-            if args.min_signal != cm.min_sig or args.min_reflen != cm.min_len:
-                # pedantically set these and pass to method just in-case of logic oversight
-                cm.min_len = args.min_reflen
-                cm.min_sig = args.min_signal
-                cm.set_primary_acceptance_mask(min_sig=args.min_signal, min_len=args.min_reflen, update=True)
-        else:
-            # Create a contact map for analysis
-            cm = ContactMap(args.bam,
-                            args.enzymes,
-                            args.fasta,
-                            args.min_insert,
-                            args.min_mapq,
-                            min_len=args.min_reflen,
-                            min_sig=args.min_signal,
-                            min_extent=args.min_extent,
-                            min_size=args.min_size,
-                            # max_fold=args.max_fold,
-                            strong=args.strong,
-                            bin_size=args.bin_size,
-                            tip_size=args.tip_size,
-                            precount=args.eta)
+        logger.info('Loading existing clustering solution from: {}'.format(args.CLUSTERING))
+        clustering = load_object(args.CLUSTERING)
 
-            if cm.is_empty():
-                logger.info('Stopping as the map is empty')
-                sys.exit(1)
+        cm.min_extent = args.min_extent
+        # update the mask if the user has specified a threshold, which might be the same as before
+        if args.min_signal != cm.min_sig or args.min_reflen != cm.min_len:
+            # pedantically set these and pass to method just in-case of logic oversight
+            cm.min_len = args.min_reflen
+            cm.min_sig = args.min_signal
+            cm.set_primary_acceptance_mask(min_sig=args.min_signal, min_len=args.min_reflen, update=True)
 
-            logger.info('Saving contact map instance')
-            save_object(os.path.join(args.out_dir, 'contact_map.p'), cm)
+        if cm.is_empty():
+            logger.info('Stopping as the map is empty')
+            sys.exit(1)
 
-        # cluster the entire map
-        clustering = cluster_map(cm, method='infomap', seed=args.seed, work_dir=args.out_dir)
-        # generate report per cluster
-        cluster_report(cm, clustering, is_spades=True)
-        # write MCL clustering file
-        write_mcl(cm, os.path.join(args.out_dir, 'clustering.mcl'), clustering)
-        # serialize full clustering object
-        save_object(os.path.join(args.out_dir, 'clustering.p'), clustering)
+        # order
+        order_clusters(cm, clustering, seed=args.seed, min_len=args.min_ordlen, min_size=args.min_size,
+                       dist_method=args.dist_method, work_dir=args.OUTDIR)
 
-        # write a tabular report
-        write_report(os.path.join(args.out_dir, 'cluster_report.csv'), clustering)
-
-        if not args.skip_ordering:
-            # order
-            order_clusters(cm, clustering, seed=args.seed, min_len=args.min_ordlen, dist_method=args.dist_method,
-                           work_dir=args.out_dir)
-            # serialize full clustering object again
-            save_object(os.path.join(args.out_dir, 'clustering_ordered.p'), clustering)
+        # serialize full clustering object again
+        logger.info('Saving ordered clustering instance')
+        save_object(os.path.join(args.OUTDIR, 'clustering_ordered.p'), clustering)
 
         # write per-cluster fasta files, also separate ordered fasta if ordering performed
-        write_fasta(cm, args.out_dir, clustering, source_fasta=args.fasta, clobber=True, only_large=args.only_large)
+        write_fasta(cm, args.OUTDIR, clustering, source_fasta=args.fasta, clobber=True, only_large=args.only_large)
 
         if not args.skip_plotting:
 
-            if not args.skip_ordering:
-                # just the clusters and contigs which were ordered
-                plot_clusters(cm, os.path.join(args.out_dir, 'cluster_scaffolded_plot.png'), clustering,
-                              max_image_size=args.max_image, ordered_only=True, simple=False, permute=True)
-
-            # the entire clustering
-            plot_clusters(cm, os.path.join(args.out_dir, 'cluster_plot.png'), clustering,
-                          max_image_size=args.max_image, ordered_only=False, simple=False, permute=True)
+            # just the clusters and contigs which were ordered
+            logger.info('Plotting ordered clusters')
+            plot_clusters(cm, os.path.join(args.OUTDIR, 'cluster_scaffolded_plot.png'), clustering,
+                          max_image_size=args.max_image, ordered_only=True, simple=False, permute=True)
 
     except ApplicationException as ex:
         import sys
