@@ -18,27 +18,23 @@ Numpy and Cython must be installed first. Note: NumPy's version is restricted du
 
 It is also highly recommended that a virtual environment is used as there are version requirements on some packages and the final executable of scaffold3C will be created in ```bin/```. 
 
-1. Make a working directory
+1. Create a clean Python 2.7 environment
 
-```mkdir scaffold3C```
+```$bash
+mkdir scaffold3C
+cd scaffold3C
+virtualenv -p python2.7 .
+```
 
-2. Create a new virtual environment
-
-```virtualenv -p python2 scaffold3C```
-
-3. Change to this in directory
-
-```cd scaffold3C```
-
-3. Install numpy < 1.15 and cython
+2. Install NumPy < 1.15 and Cython.
    
 ```bin/pip install "numpy<1.15" cython```
 
-2. Install scaffold3C
+3. Install scaffold3C from github
 
 ```pip install git+https://github.com/cerebis/scaffold3C```
  
-Once complete, you will find the executable entry-point for scaffold3C at ```bin/scaffold3C```.
+Once pip completes installation, you will find an entry-point for scaffold3C at ```./bin/scaffold3C```.
 
 ## Command-line interface
 
