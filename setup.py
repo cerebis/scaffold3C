@@ -24,6 +24,9 @@ setuptools.setup(
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
         'Development Status :: 2 - Pre-Alpha'
-    ]
+    ],
 
+    entry_points={
+        'console_scripts': ['scaffold3C=scaffold3C.command_line:main'],
+    }
 )
