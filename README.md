@@ -90,6 +90,6 @@ optional arguments:
 
 To scaffold a metagenomic assembly, you will first need to analyse the assembly with the Hi-C based genome binning tool [bin3C](https:://github.com/cerebis/bin3C).
 
-Basic usage of scaffol3C after a bin3C analysis is completed.
+Basic usage of scaffold3C after a bin3C analysis is completed.
 
 ```bin/scaffold3C [contact_map] [clustering] [out_dir]```
