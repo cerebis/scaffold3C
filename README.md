@@ -1,4 +1,4 @@
-#scaffold3C
+# scaffold3C
 
 scaffold3C is a bioinformatics analysis tool which attempts to determine the order (and potentially orientation) of genome assembly contigs using Hi-C linkage information. To that end, a genome or metagenome sequencing project will require both conventional shotgun (for assembly) and Hi-C sequencing data..
 
@@ -6,11 +6,11 @@ Finding the order and orientation of contigs within a chromosome is accomplished
 
 Currently scaffold3C takes as input the results of the genome-clustering tool [bin3C](https://github.com/cerebis/bin3C).
 
-##Installation
+## Installation
 
-###Dependencies
+### Dependencies
 
-####proxigenomics_toolkit
+#### proxigenomics_toolkit
 
  
 
