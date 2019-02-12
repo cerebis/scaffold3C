@@ -3,18 +3,17 @@ from proxigenomics_toolkit.io_utils import *
 from proxigenomics_toolkit.contact_map import *
 from proxigenomics_toolkit.exceptions import ApplicationException
 import logging
-import sys
 
 __version__ = '0.1a1'
 
-if __name__ == '__main__':
+
+def main():
+
     import argparse
+    import sys
 
     def mk_version():
         return 'scaffold3C v{}'.format(__version__)
-
-    def out_name(base, suffix):
-        return '{}{}'.format(base, suffix)
 
     parser = argparse.ArgumentParser(description='Create a 3C fragment map from a BAM file')
 
