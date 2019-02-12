@@ -28,11 +28,15 @@ virtualenv -p python2.7 .
 
 2. Install NumPy < 1.15 and Cython.
    
-```bin/pip install "numpy<1.15" cython```
+```$bash
+bin/pip install "numpy<1.15" cython
+```
 
 3. Install scaffold3C from github
 
-```pip install git+https://github.com/cerebis/scaffold3C```
+```$bash
+pip install git+https://github.com/cerebis/scaffold3C
+```
  
 Once pip completes installation, you will find an entry-point for scaffold3C at ```./bin/scaffold3C```.
 
@@ -86,6 +90,29 @@ optional arguments:
 
 To scaffold a metagenomic assembly, you will first need to analyse the assembly with the Hi-C based genome binning tool [bin3C](https://github.com/cerebis/bin3C).
 
+To order the contigs of each MAG identified by bin3C, you will need to let bin3C at the time of map creation to produce an additional extent map. This is accomplished by specifying a `bin_size` during the `mkmap` stage. 
+
+An extent map is a contact map where the bins are not simply whole sequences, but rather are measured in base-pair extent. In this way, a bin size of 5kbp will produce 20 bins across a 100kbp contig. 
+
+### Choosing a bin size
+
+Keep in mind that the size of the contact map grows with the square of the number of bins. Although scaffold3C and bin3C make use of sparse matrices, memory constraints can still play a factor. This is particularly the case for complex and deeply sequenced metagenomic assemblies, where there can be >100,000 contigs of significant length.
+
+Further, making bins too small will weaken the Hi-C signal by spreading it over too wide an area. Standard bin3C clustering runs perform fine on contigs down to 1000bp, while the more demanding task of scaffolding requires more signal. A bin_size of 5-10 kbp is sufficiently smal and will not exclude smaller contigs which are still larger than the minimum contig length.
+
+An extent map will be computing by specifying a bin_size during bin3C map creation.
+
+```$bash
+bin3C mkmap --bin_size 10000 -e MluCI -e Sau3AI [fasta] [bam_file] [out_dir]
+```
+
 Basic usage of scaffold3C after a bin3C analysis is completed.
 
-```bin/scaffold3C [contact_map] [clustering] [out_dir]```
+```$bash
+bin/scaffold3C [contact_map] [clustering] [out_dir]
+```
+
+#### Orientation
+
+To infer orientation requires a further option `tip_size` to be supplied at the time of map creation in bin3C. This procedure roughly doubles the storage requirements of the extent map and splits the Hi-C signal in two parts, tracking the ends of each contig independently.
+
