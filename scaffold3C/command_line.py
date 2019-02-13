@@ -6,7 +6,6 @@ import logging
 
 __version__ = '0.1a1'
 
-
 def main():
 
     import argparse
@@ -29,7 +28,7 @@ def main():
     parser.add_argument('--min-size', type=int, default=5, help='Minimum cluster size for ordering [5]')
     parser.add_argument('--min-extent', type=int, default=50000,
                         help='Minimum cluster extent (kb) for ordering [50000]')
-    parser.add_argument('--min-ordlen', default=2000,
+    parser.add_argument('--min-ordlen', type=int, default=2000,
                         help='Minimum length of sequence to use in ordering [2000]')
 
     parser.add_argument('--dist-method', choices=['inverse', 'neglog'], default='inverse',
