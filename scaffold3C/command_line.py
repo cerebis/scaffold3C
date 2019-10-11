@@ -4,7 +4,8 @@ from proxigenomics_toolkit.contact_map import *
 from proxigenomics_toolkit.exceptions import ApplicationException
 import logging
 
-__version__ = '0.1a1'
+__version__ = '0.2'
+
 
 def main():
 
@@ -41,6 +42,7 @@ def main():
     parser.add_argument('MAP', help='Contact map')
     parser.add_argument('CLUSTERING', help='Clustering solution')
     parser.add_argument('OUTDIR', help='Output directory')
+    parser.add_argument('CLUSTER_ID', nargs='*', help='Analyze only the specified clusters')
 
     args = parser.parse_args()
 
@@ -111,22 +113,29 @@ def main():
             # pedantically set these and pass to method just in-case of logic oversight
             cm.min_len = args.min_reflen
             cm.min_sig = args.min_signal
-            cm.set_primary_acceptance_mask(min_sig=args.min_signal, min_len=args.min_reflen, update=True)
+
+        cm.set_primary_acceptance_mask(update=True)
 
         if cm.is_empty():
             logger.info('Stopping as the map is empty')
             sys.exit(1)
 
+        cl_list = None
+        if args.CLUSTER_ID:
+            # Convert public string ids to internal 0-based integer ids
+            cl_list = [int(_id.split('_')[-1]) - 1 for _id in args.CLUSTER_ID]
+
         # order
-        order_clusters(cm, clustering, seed=args.seed, min_len=args.min_ordlen, min_size=args.min_size,
-                       dist_method=args.dist_method, work_dir=args.OUTDIR)
+        order_clusters(cm, clustering, seed=args.seed, cl_list=cl_list, min_len=args.min_ordlen,
+                       min_size=args.min_size, dist_method=args.dist_method, work_dir=args.OUTDIR)
 
         # serialize full clustering object again
         logger.info('Saving ordered clustering instance')
         save_object(os.path.join(args.OUTDIR, 'clustering_ordered.p'), clustering)
 
         # write per-cluster fasta files, also separate ordered fasta if ordering performed
-        write_fasta(cm, args.OUTDIR, clustering, source_fasta=args.fasta, clobber=True, only_large=args.only_large)
+        write_fasta(cm, args.OUTDIR, clustering, cl_list=cl_list, source_fasta=args.fasta,
+                    clobber=True, only_large=args.only_large)
 
         if not args.skip_plotting:
 

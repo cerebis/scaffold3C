@@ -7,7 +7,7 @@ setuptools.setup(
     name='scaffold3C',
     description='Compute the order and orientation of assembly contigs using Hi-C sequencing data.',
     long_description=long_description,
-    version='0.1a1',
+    version='0.2',
     author='Matthew Z DeMaere',
     author_email='matt.demaere@gmail.com',
     platforms='Linux-86_x64',
@@ -15,7 +15,7 @@ setuptools.setup(
     url='https://github.com/cerebis/scaffold3C',
     license='GNU Affero General Public License v3',
 
-    install_requires=['proxigenomics_toolkit @ git+https://github.com/cerebis/proxigenomics_toolkit@master#egg=proxigenomics_toolkit'],
+    install_requires=['proxigenomics_toolkit @ git+https://github.com/cerebis/proxigenomics_toolkit@extraction#egg=proxigenomics_toolkit'],
 
     classifiers=[
         'Programming Language :: Python :: 2.7',
